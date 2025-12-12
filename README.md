@@ -7,6 +7,6 @@
 
 ## Логины и пароли для разных ролей:
 
--   **analyst** --- пароль: `pass1`, роль: `security`
--   **specialist** --- пароль: `pass2`, роль: `equipment`
--   **manager** --- пароль: `pass3`, роль: `fraud`
+-   **analyst(логин)** --- пароль: `pass1`, роль: `security`
+-   **specialist(логин)** --- пароль: `pass2`, роль: `equipment`
+-   **manager(логин)** --- пароль: `pass3`, роль: `fraud`
