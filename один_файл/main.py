@@ -980,6 +980,11 @@ class AlertsView(IView):
 class SettingsView(IView):
     def __init__(self, app):
         self.app = app
+        # Сохраняем ссылки на виджеты, чтобы привязать обработчики в handle_input
+        self.sens_scale = None
+        self.sens_label = None
+        self.set_button = None
+        self.tune_button = None
 
     def render(self):
         tk.Label(self.app.content, text="Settings", font=("Arial", 16), bg="#001f3f", fg="white").pack(pady=10)
@@ -999,14 +1004,19 @@ class SettingsView(IView):
         self.sens_label.pack(side=tk.LEFT, padx=10)
 
         # Увеличенный ползунок (length) и растяжение по X
+        # Не привязываем команду ползунка здесь — делаем это в handle_input для централизованной обработки ввода
         self.sens_scale = ttk.Scale(sens_frame, from_=0.0, to=1.0, orient='horizontal',
-                                    value=settings.sensitivity, command=self.update_label, length=600)
+                                    value=settings.sensitivity, length=600)
         self.sens_scale.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10)
 
-        ttk.Button(self.app.content, text="Set Sensitivity", command=self.set_sensitivity).pack(pady=5)
-        ttk.Button(self.app.content, text="Tune Sensitivity", command=self.tune_sensitivity).pack(pady=5)
+        # Создаём кнопки, но команды назначим в handle_input()
+        self.set_button = ttk.Button(self.app.content, text="Set Sensitivity")
+        self.set_button.pack(pady=5)
+        self.tune_button = ttk.Button(self.app.content, text="Tune Sensitivity")
+        self.tune_button.pack(pady=5)
 
     def update_label(self, value):
+        # Используется как callback для слайдера
         self.sens_label.config(text=f"{float(value):.2f}")
 
     def set_sensitivity(self):
@@ -1024,7 +1034,39 @@ class SettingsView(IView):
         self.app.switch_view("Settings")
 
     def handle_input(self):
-        pass
+        try:
+            # Слайдер: обновление метки при движении
+            if self.sens_scale is not None:
+                try:
+                    # Отвяжем старую команду, если она была
+                    self.sens_scale.configure(command=lambda v: None)
+                except Exception:
+                    pass
+                # Назначаем команду обновления метки
+                self.sens_scale.configure(command=self.update_label)
+
+            # Кнопки: назначаем команды
+            if self.set_button is not None:
+                try:
+                    self.set_button.configure(command=self.set_sensitivity)
+                except Exception:
+                    # fallback: если configure не поддерживается для widget, используем bind
+                    try:
+                        self.set_button.bind("<Button-1>", lambda e: self.set_sensitivity())
+                    except Exception:
+                        pass
+
+            if self.tune_button is not None:
+                try:
+                    self.tune_button.configure(command=self.tune_sensitivity)
+                except Exception:
+                    try:
+                        self.tune_button.bind("<Button-1>", lambda e: self.tune_sensitivity())
+                    except Exception:
+                        pass
+        except tk.TclError:
+            # Виджеты могли быть уничтожены — игнорируем
+            pass
 
     def get_view_name(self) -> str:
         return "Settings"
